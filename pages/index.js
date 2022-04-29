@@ -4,20 +4,40 @@ import styles from '../styles/Home.module.css'
 import { useEffect, useState } from 'react'
 
 export default function Home() {
-  const [ items, setItems ] = useState(['⚡️','🎨','🔥','🐛','🚑️','✨'])
+  
+  const [ items, setItems ] = useState(['⚡️','⚡️','⚡️','⚡️','⚡️','⚡️'])
+  const [ source, setSource ] = useState("Start")
+  const [ placed, setPlaced ] = useState("End")
+  const [ draggableState, setDraggableState ] = useState(0);
+
+  function checkMatch(start, end, draggable){   
+    let fases = ['⚡️','🎨','🔥','🐛','🚑️','✨']
+    
+    let array = items.slice()
+    if (start==end) {
+      array.splice(array.indexOf(start),1)
+      fases.map((i)=>{
+        if (i==start && fases.indexOf(i)+1!==fases.length) array[array.indexOf(end)] = fases[fases.indexOf(i)+1]
+      })
+      setItems(array)
+      draggable.destroy()
+      console.log(items) 
+    }
+    
+  }
+
+  function addItem(){
+    let array = items.slice();
+    array.push('⚡️')
+    setItems(array)
+  }
   
   async function loadDrag(){
-    const { Draggable, Sortable, Plugins } = await import(/* webpackChunkName: "user-defined" */'@shopify/draggable')
+    const {
+      Draggable,
+    } = await import(/* webpackChunkName: "user-defined" */'@shopify/draggable')
 
-    // const draggable = new Draggable(document.querySelectorAll('ul'), {
-    //   draggable: 'li',
-    //   exclude: {
-    //     plugins: [Draggable.Plugins.Focusable],
-    //     sensors: [Draggable.Sensors.TouchSensor],
-    //   }
-    // });
-
-    
+    if (draggableState) draggableState.destroy()
 
     const containers = document.querySelectorAll('ul');
 
@@ -25,24 +45,46 @@ export default function Home() {
       return false;
     }
 
-    const sortable = new Sortable(containers, {
+    console.log('Loading with: ' + items)
+
+    const draggable = new Draggable(containers, {
       draggable: 'li',
       mirror: {
         constrainDimensions: true,
       },
-      plugins: [Plugins.SortAnimation],
-      swapAnimation: {
-        duration: 200,
-        easingFunction: 'ease-in-out',
-      }     
     });
 
-    return sortable;
+    draggable.on("drag:move", () => {
+      let element = document.getElementsByClassName('draggable-source--is-dragging')[0]
+      element.style.visibility = 'hidden';   
+      setSource(element.innerHTML)
+    });
+
+    draggable.on("drag:over", ()=>{
+      let element = document.getElementsByClassName('draggable--over')[0]
+      setPlaced(element.innerHTML)
+    })
+
+    draggable.on("drag:stop", () => {
+      let start = document.getElementsByClassName('draggable-source--is-dragging')[0]
+      let end = document.getElementsByClassName('draggable--over')[0]
+
+      if (!start || !end) return
+
+
+      checkMatch(start.innerHTML, end.innerHTML, draggable)
+    })
+
+    setDraggableState(draggable)
   }
 
   useEffect(()=>{   
-    if (typeof(window)!=="undefined") window.addEventListener('load', loadDrag);
+    // if (typeof(window)!=="undefined") window.addEventListener('load', loadDrag);
   })
+
+  useEffect(()=>{
+    loadDrag()
+  }, [items])
 
   return (
     <div className={styles.container}>
@@ -52,12 +94,12 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      <button onClick={()=>addItem()} style={{width:'100px', height:'100px', margin:'10px auto'}}>new</button>
       <main className={styles.main}>
-        
         <ul>
           {
-            items.map((i)=>(
-              <li key={i}>{i}</li>
+            items.map((i,pos)=>(
+              <li key={i + pos}>{i}</li>
             ))
           }
         </ul>
