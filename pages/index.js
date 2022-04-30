@@ -12,23 +12,27 @@ export default function Home() {
 
   function checkMatch(start, end, draggable){   
     let fases = ['⚡️','🎨','🔥','🐛','🚑️','✨']
+
+    console.log(start.id + ' -> ' + end.id)
     
     let array = items.slice()
-    if (start==end) {
-      array.splice(array.indexOf(start),1)
-      fases.map((i)=>{
-        if (i==start && fases.indexOf(i)+1!==fases.length) array[array.indexOf(end)] = fases[fases.indexOf(i)+1]
+    if (start.innerHTML==end.innerHTML) {
+      // array.splice(array.indexOf(start),1)
+      array[start.id]=' '
+      fases.map((i,pos)=>{
+        if (i==start.innerHTML && pos+1!==fases.length) array[end.id] = fases[pos+1]
       })
-      setItems(array)
-      draggable.destroy()
-      console.log(items) 
+    } else if (end.innerHTML===' ') {
+      array[start.id]=' '
+      array[end.id]=start.innerHTML
     }
-    
+    draggable.destroy()
+    setItems(array)
   }
 
   function addItem(){
     let array = items.slice();
-    array.push('⚡️')
+    array[array.indexOf(' ')] = '⚡️'
     setItems(array)
   }
   
@@ -72,7 +76,7 @@ export default function Home() {
       if (!start || !end) return
 
 
-      checkMatch(start.innerHTML, end.innerHTML, draggable)
+      checkMatch(start, end, draggable)
     })
 
     setDraggableState(draggable)
@@ -99,7 +103,7 @@ export default function Home() {
         <ul>
           {
             items.map((i,pos)=>(
-              <li key={i + pos}>{i}</li>
+              <li key={i + pos} id={pos}>{i}</li>
             ))
           }
         </ul>
